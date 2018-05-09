@@ -1,107 +1,175 @@
 $(function () {
     let todo = $('.todo-list');
     let comp = $('.comp-list');
+    let alertarea = $('.alertarea');
     let indexcounter = 0;
     let todolist = [];
     let storage = localStorage.todo;
+    let animation_rubber = 'animated rubberBand';
+    let animationimg = $('.img');
 
-    if (storage){
-        JSON.parse(storage).forEach( evt => {
-            taskAdd(evt.val);
+    if (storage) {
+        let object = JSON.parse(storage).forEach(evt => {
+            taskAdd(
+                evt.val,
+                evt.progress_list,
+                evt.timestamp
+            );
             indexcounter++;
-            console.log('indexcounter:'+indexcounter);
+            //console.log('indexcounter:' + indexcounter);
         });
     }
+
+    // とどを動かす処理
+    $('#button-addon').on({
+        "click":function(){
+            animationimg.addClass(animation_rubber);
+        },
+        "webkitTransitionEnd webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend":function(){
+            animationimg.removeClass(animation_rubber);
+        }
+    });
 
     $('.add-btn').on('click', () => {
         //入力されたタスクの追加。
         const addTask = $('.new-task').val();
-        if (!addTask){
-            $('#new-task').addClass('form-control-danger');
-            $('#new-task').removeClass('comp-btn');
+
+        if (!addTask) {
             return;
-        }//↑空白処理
+        } //↑空白処理
         const escape = htmlspecialchars(addTask);
+        
 
         taskAdd(escape);
         $('.new-task').val('');
         indexcounter++;
-        storages();   
+        storages();
     });
 
     // =======================================
     // taskAdd(task) Todo追加
     // =======================================
-    function taskAdd(task){
-        const addedTaskEl = $('<li class="list-item">').attr('data-todo', indexcounter);
+    function taskAdd(task, progress_list){
+        const addedTaskEl = $('<li class="list-item animated flipInX">').attr('data-todo', indexcounter);
+
         //削除・コンプ ボタンの追加
         addedTaskEl.html(`
-            <input type="checkbox" id="check">
-            <label for="check" id="text">${task}</label>
-            <input type="text">
-            <div class="btn-group btn-group-lg" role="group" aria-label="...">
-                <button class="comp-btn">完了</button>
-                <button class="del-btn">削除</button>
+            
+            <label for="check" id="text" class="col-sm-12">${task}</label>
+            <input type="text" class="col-sm-12 edit-task" maxlength="140">
+            <div class="btn-group" role="group">
+                <button class="comp-btn btn btn-outline-primary">完了</button>
+                <button class="edit-btn btn btn-outline-warning">編集</button>
+                <button class="del-btn btn btn-outline-danger">削除</button>
             </div>
-        `
-        );
+        `);    
 
         // console.log(task);
 
-          // 削除ボタン 機能の追加
-          $(addedTaskEl).on('click', '.del-btn', (evt) =>{
-            $(evt.currentTarget).parent().parent().remove();
-
+        // 削除ボタン 機能の追加
+        $(addedTaskEl).on('click', '.del-btn', (evt) => {
+            let listItem = addedTaskEl;
+            let label = listItem.find('label');
+            $.confirm({
+                text: label.text() +"を削除しますか?",
+                confirmButtonClass: "btn-danger",
+                cancelButtonClass: "btn-secondary",
+                cancelButton: "戻る",
+                confirmButton: "削除",
+                cancel: function() {
+                },
+                confirm: function() {
+                    $(evt.currentTarget).parent().parent().remove();
+                    storages();
+                }
+            });
         });
 
         // コンプボタン 機能の追加
-        $(addedTaskEl).on('click', '.comp-btn', (evt) =>{
-            comp.append($(evt.currentTarget).parent().parent());
+        $(addedTaskEl).on('click', '.comp-btn', (evt) => {
             //addedTaskE.find('.comp-btn')打つのめんどいから。
             const changeBtn = addedTaskEl.find('.comp-btn');
+
+            comp.append($(evt.currentTarget).parent().parent());
+            addedTaskEl.addClass('progress_list');
             changeBtn.text('戻す');
             changeBtn.addClass('back-btn');
             changeBtn.removeClass('comp-btn');
+            storages();
+        });
+
+        // 編集ボタン 機能の追加
+        $(addedTaskEl).on('click', '.edit-btn', (evt) => {
+            editor(addedTaskEl);
+            storages();
         });
 
         // バックボタン 機能の追加
-        $(addedTaskEl).on('click', '.back-btn', (evt) =>{
-            todo.append($(evt.currentTarget).parent().parent());
+        $(addedTaskEl).on('click', '.back-btn', (evt) => {
             //addedTaskE.find('.back-btn')打つのめんどいから。
             const changeBtn = addedTaskEl.find('.back-btn');
 
+            todo.append($(evt.currentTarget).parent().parent());
             changeBtn.text('完了');
             changeBtn.addClass('comp-btn');
             changeBtn.removeClass('back-btn');
-        })
+            addedTaskEl.removeClass('progress_list');
+            storages();
+        });
 
-         //タスクの追加
-        todo.append(addedTaskEl);
+        //タスクの追加
+        if(progress_list) {
+            addedTaskEl.addClass('progress_list');
+            comp.append(addedTaskEl);
+        }
+        else {
+            todo.append(addedTaskEl);
+        }
     };
 
     // =======================================
     // storages() localStorage追加
     // =======================================
-    function storages(){
+    function storages() {
         let list = [];
 
-        todo.find("li").each(function(){
+        $('ul').find("li").each(function() {
             let item = $(this);
-            console.log(this);
-
+            //console.log(item.hasClass('progress_list'));
             list.push({
-                val:item.find('#text').text()
-
+                val: item.find('#text').text(),
+                progress_list: item.hasClass('progress_list'),
+                timestamp: new Date().getTime()
             });
+            console.log(item)
         });
         localStorage["todo"] = JSON.stringify(list);
     }
+
+    // =======================================
+    // editer() todoの変更
+    // =======================================
+    function editor(addedTaskEl) {
+
+        let listItem = addedTaskEl;
+        let editInput = listItem.find('input');
+        let label = listItem.find('label');
+        let containsClass = listItem.hasClass('editMode');
+
+        if (containsClass) {
+            label.text(editInput.val());
+        } else {
+            editInput.val(label.text()); 
+        }
+        listItem.toggleClass('editMode');
+    }
+
 });
 
 function htmlspecialchars(str) {
-	return (str + '').replace(/&/g, '&amp;')
-		.replace(/"/g, '&quot;')
-		.replace(/'/g, '&#039;')
-		.replace(/</g, '&lt;')
-		.replace(/>/g, '&gt;');
+    return (str + '').replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
 }
