@@ -139,7 +139,7 @@ $(function () {
             list.push({
                 val: item.find('#text').text(),
                 progress_list: item.hasClass('progress_list'),
-                timestamp: new Date().getTime()
+                timestamp: new Date().getTime() + 60*60*24*30*1000 
             });
             console.log(item)
         });
