@@ -83,6 +83,10 @@
     height: 35px;
   }
 
+  .radius{
+    border-radius: 20px;
+  }
+
   p > button:hover {
     color: #0FC57C;
   }

@@ -1,7 +1,6 @@
 $(function () {
     let todo = $('.todo-list');
     let comp = $('.comp-list');
-    let alertarea = $('.alertarea');
     let indexcounter = 0;
     let todolist = [];
     let storage = localStorage.todo;
@@ -12,8 +11,7 @@ $(function () {
         let object = JSON.parse(storage).forEach(evt => {
             taskAdd(
                 evt.val,
-                evt.progress_list,
-                evt.timestamp
+                evt.progress_list
             );
             indexcounter++;
             //console.log('indexcounter:' + indexcounter);
@@ -22,13 +20,14 @@ $(function () {
 
     // とどを動かす処理
     $('#button-addon').on({
-        "click":function(){
-            animationimg.addClass(animation_rubber);
+        'click':() => {
+            $(animationimg).addClass(animation_rubber);
         },
-        "webkitTransitionEnd webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend":function(){
-            animationimg.removeClass(animation_rubber);
+        'webkitTransitionEnd webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend':() =>{
+            $(animationimg).removeClass(animation_rubber);
         }
     });
+
 
     $('.add-btn').on('click', () => {
         //入力されたタスクの追加。
@@ -36,9 +35,8 @@ $(function () {
 
         if (!addTask) {
             return;
-        } //↑空白処理
+        } //↑空白処理 スペースは未対応。
         const escape = htmlspecialchars(addTask);
-        
 
         taskAdd(escape);
         $('.new-task').val('');
@@ -55,12 +53,12 @@ $(function () {
         //削除・コンプ ボタンの追加
         addedTaskEl.html(`
             
-            <label for="check" id="text" class="col-sm-12">${task}</label>
-            <input type="text" class="col-sm-12 edit-task" maxlength="140">
+            <label for="check" id="text" class="col-sm-12 radius">${task}</label>
+            <input type="text" class="col-sm-12 edit-task" maxlength="140" style="margin-bottom: 10px;">
             <div class="btn-group" role="group">
-                <button class="comp-btn btn btn-outline-primary">完了</button>
-                <button class="edit-btn btn btn-outline-warning">編集</button>
-                <button class="del-btn btn btn-outline-danger">削除</button>
+                <button class="comp-btn btn btn-primary">完了</button>
+                <button class="edit-btn btn btn-warning">編集</button>
+                <button class="del-btn btn btn-danger">削除</button>
             </div>
         `);    
 
@@ -139,7 +137,7 @@ $(function () {
             list.push({
                 val: item.find('#text').text(),
                 progress_list: item.hasClass('progress_list'),
-                timestamp: new Date().getTime() + 60*60*24*30*1000 
+                timestamp: new Date().getTime()
             });
             console.log(item)
         });
