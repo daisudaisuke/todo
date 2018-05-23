@@ -2,28 +2,36 @@ $(function () {
     let todo = $('.todo-list');
     let comp = $('.comp-list');
     let indexcounter = 0;
-    let todolist = [];
     let animation_rubber = 'animated rubberBand';
     let animationimg = $('.img');
-    
-//routesのindex.jsで返したものを表示していく
-    if (storage) {
-        let object = JSON.parse(storage).forEach(evt => {
-            taskAdd(
-                evt.val,
-                evt.progress_list
-            );
-            indexcounter++;
-            //console.log('indexcounter:' + indexcounter);
-        });
-    }
+    let taskStr = [];
+
+    //routesのindex.jsで返したものを表示していく
+    $.ajax({
+            url: '/firstload',
+            type: 'GET'
+        })
+        .done((data) => {
+            data.forEach((val, index) => {
+                taskStr[index] = val;
+                taskAdd(val.task, val.progress);
+                $.ajax({
+                    url: '/firstupdate',
+                    type: 'PUT', 
+                    data: {
+                        taskID: indexcounter,
+                        _id: val._id
+                    }
+                })
+            });
+        })
 
     // とどを動かす処理
     $('#button-addon').on({
-        'click':() => {
+        'click': () => {
             $(animationimg).addClass(animation_rubber);
         },
-        'webkitTransitionEnd webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend':() =>{
+        'webkitTransitionEnd webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend': () => {
             $(animationimg).removeClass(animation_rubber);
         }
     });
@@ -37,22 +45,37 @@ $(function () {
             return;
         } //↑空白処理 スペースは未対応。
         const escape = htmlspecialchars(addTask);
-
         taskAdd(escape);
+
+        $.ajax({
+                url: '/',
+                type: 'POST',
+                data: {
+                    task: escape,
+                    progress: false,
+                    taskID: indexcounter
+                },
+            })
+            .done((data) => {
+            })
+            .fail(() => {
+
+            });
+
         $('.new-task').val('');
-        indexcounter++;
-        storages();
+
     });
 
     // =======================================
     // taskAdd(task) Todo追加
     // =======================================
-    function taskAdd(task, progress_list){
+    function taskAdd(task, progress) {
+
+        indexcounter++;
         const addedTaskEl = $('<li class="list-item animated flipInX">').attr('data-todo', indexcounter);
 
         //削除・コンプ ボタンの追加
         addedTaskEl.html(`
-            
             <label for="check" id="text" class="col-sm-12 radius">${task}</label>
             <input type="text" class="col-sm-12 edit-task" maxlength="140" style="margin-bottom: 10px;">
             <div class="btn-group" role="group">
@@ -60,31 +83,47 @@ $(function () {
                 <button class="edit-btn btn btn-warning">編集</button>
                 <button class="del-btn btn btn-danger">削除</button>
             </div>
-        `);    
-
-        // console.log(task);
+        `);
 
         // 削除ボタン 機能の追加
         $(addedTaskEl).on('click', '.del-btn', (evt) => {
             let listItem = addedTaskEl;
             let label = listItem.find('label');
+            
             $.confirm({
-                text: label.text() +"を削除しますか?",
+                text: label.text() + "を削除しますか?",
                 confirmButtonClass: "btn-danger",
                 cancelButtonClass: "btn-secondary",
                 cancelButton: "戻る",
                 confirmButton: "削除",
-                cancel: function() {
-                },
-                confirm: function() {
+                cancel: function () {},
+                confirm: function () {
                     $(evt.currentTarget).parent().parent().remove();
-                    storages();
+                    $.ajax({
+                        url: '/del',
+                        type: 'DELETE',
+                        data: {
+                            taskID: $(evt.currentTarget).parent().parent().data('todo')
+                        },
+                    })
+                    .done((data) => {
+                        console.log(data);
+                    })
+                    .fail(() => {
+                        console.log('err');
+                    });
                 }
             });
         });
 
-        // コンプボタン 機能の追加
-        $(addedTaskEl).on('click', '.comp-btn', (evt) => {
+        // 編集ボタン 機能の追加
+        $(addedTaskEl).on('click', '.edit-btn', (evt) => {
+            editTask(addedTaskEl);
+        });
+
+
+         // コンプボタン 機能の追加
+         $(addedTaskEl).on('click', '.comp-btn', (evt) => {
             //addedTaskE.find('.comp-btn')打つのめんどいから。
             const changeBtn = addedTaskEl.find('.comp-btn');
 
@@ -93,13 +132,14 @@ $(function () {
             changeBtn.text('戻す');
             changeBtn.addClass('back-btn');
             changeBtn.removeClass('comp-btn');
-            storages();
-        });
 
-        // 編集ボタン 機能の追加
-        $(addedTaskEl).on('click', '.edit-btn', (evt) => {
-            editor(addedTaskEl);
-            storages();
+            $.ajax({
+                url: '/updateProgress',
+                type: 'PUT',
+                data: {
+                    progress: true
+                }
+            })
         });
 
         // バックボタン 機能の追加
@@ -111,43 +151,29 @@ $(function () {
             changeBtn.text('完了');
             changeBtn.addClass('comp-btn');
             changeBtn.removeClass('back-btn');
-            addedTaskEl.removeClass('progress_list');
-            storages();
+            addedTaskEl.removeClass('progreses');
+            $.ajax({
+                url: '/updateProgress',
+                type: 'PUT',
+                data: {
+                    progress: false
+                }
+            })
         });
 
         //タスクの追加
-        if(progress_list) {
-            addedTaskEl.addClass('progress_list');
+        if (progress) {
+            addedTaskEl.addClass('progreses');
             comp.append(addedTaskEl);
-        }
-        else {
+        } else {
             todo.append(addedTaskEl);
         }
     };
 
     // =======================================
-    // storages() localStorage追加
+    // editTask() todoの変更
     // =======================================
-    function storages() {
-        let list = [];
-
-        $('ul').find("li").each(function() {
-            let item = $(this);
-            //console.log(item.hasClass('progress_list'));
-            list.push({
-                val: item.find('#text').text(),
-                progress_list: item.hasClass('progress_list'),
-                timestamp: new Date().getTime()
-            });
-            console.log(item)
-        });
-        localStorage["todo"] = JSON.stringify(list);
-    }
-
-    // =======================================
-    // editer() todoの変更
-    // =======================================
-    function editor(addedTaskEl) {
+    function editTask(addedTaskEl) {
 
         let listItem = addedTaskEl;
         let editInput = listItem.find('input');
@@ -157,11 +183,25 @@ $(function () {
         if (containsClass) {
             label.text(editInput.val());
         } else {
-            editInput.val(label.text()); 
+            editInput.val(label.text());
         }
         listItem.toggleClass('editMode');
-    }
 
+        $.ajax({
+            url: '/update',
+            type: 'PUT',
+            data: {
+                taskID: listItem.data('todo'),
+                task: label.text(),
+                progress: listItem.hasClass('progreses')
+            }
+        })
+        .done((data) => { 
+            console.log(taskID);   
+            console.log(task);
+        })
+
+    }
 });
 
 function htmlspecialchars(str) {

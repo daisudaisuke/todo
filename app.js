@@ -5,18 +5,19 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
 const mongoose = require("mongoose");
-
 const Schema = mongoose.Schema;
-const UserSchema = mongoose.Schema({
-  task: {type: String, index: {unique: true} },
-  progress: {type: Boolean}
-  },
+
+const TodoSchema = new Schema({
+  task: {type: String },
+  progress: {type: Boolean,  default: false},
+  taskID:{type: Number,  index: true }
+},
   {
     timestamps: true
   }
 );
 
-mongoose.model('UserSchema', UserSchema);
+mongoose.model('TodoSchema', TodoSchema);
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
