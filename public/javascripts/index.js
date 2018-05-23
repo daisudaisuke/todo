@@ -23,6 +23,9 @@ $(function () {
                         _id: val._id
                     }
                 })
+            })
+            .fail(() => {
+                console.log('err');
             });
         })
 
@@ -85,6 +88,9 @@ $(function () {
                     progress: true
                 }
             })
+            .fail(() => {
+                console.log('/updateProgress err');
+            });
         });
 
         // バックボタン 機能の追加
@@ -146,7 +152,7 @@ $(function () {
                                 console.log(data);
                             })
                             .fail(() => {
-                                console.log('err');
+                                console.log('/del err');
                             });
                     }
                 });
@@ -180,6 +186,9 @@ $(function () {
                 progress: listItem.hasClass('progreses')
             }
         })
+        .fail(() => {
+            console.log('/update err');
+        });
     }
 
     // =======================================
@@ -206,6 +215,9 @@ $(function () {
                 },
             })
             $('.new-task').val('');
+        })
+        .fail(() => {
+            console.log('/POST err');
         });
     }
 
