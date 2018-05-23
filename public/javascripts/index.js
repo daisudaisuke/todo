@@ -56,14 +56,7 @@ $(function () {
                     taskID: indexcounter
                 },
             })
-            .done((data) => {
-            })
-            .fail(() => {
-
-            });
-
         $('.new-task').val('');
-
     });
 
     // =======================================
@@ -128,7 +121,7 @@ $(function () {
             const changeBtn = addedTaskEl.find('.comp-btn');
 
             comp.append($(evt.currentTarget).parent().parent());
-            addedTaskEl.addClass('progress_list');
+            addedTaskEl.addClass('progreses');
             changeBtn.text('戻す');
             changeBtn.addClass('back-btn');
             changeBtn.removeClass('comp-btn');
@@ -165,6 +158,10 @@ $(function () {
         if (progress) {
             addedTaskEl.addClass('progreses');
             comp.append(addedTaskEl);
+            const changeBtn = addedTaskEl.find('.comp-btn');
+            changeBtn.text('戻す');
+            changeBtn.addClass('back-btn');
+            changeBtn.removeClass('comp-btn');
         } else {
             todo.append(addedTaskEl);
         }
@@ -196,11 +193,6 @@ $(function () {
                 progress: listItem.hasClass('progreses')
             }
         })
-        .done((data) => { 
-            console.log(taskID);   
-            console.log(task);
-        })
-
     }
 });
 
