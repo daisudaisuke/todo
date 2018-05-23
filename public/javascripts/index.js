@@ -17,7 +17,7 @@ $(function () {
                 taskAdd(val.task, val.progress);
                 $.ajax({
                     url: '/firstupdate',
-                    type: 'PUT', 
+                    type: 'PUT',
                     data: {
                         taskID: indexcounter,
                         _id: val._id
@@ -36,28 +36,8 @@ $(function () {
         }
     });
 
-
-    $('.add-btn').on('click', () => {
-        //入力されたタスクの追加。
-        const addTask = $('.new-task').val();
-
-        if (!addTask) {
-            return;
-        } //↑空白処理 スペースは未対応。
-        const escape = htmlspecialchars(addTask);
-        taskAdd(escape);
-
-        $.ajax({
-                url: '/',
-                type: 'POST',
-                data: {
-                    task: escape,
-                    progress: false,
-                    taskID: indexcounter
-                },
-            })
-        $('.new-task').val('');
-    });
+    // 入力されたタスクの追加
+    inputTask();
 
     // =======================================
     // taskAdd(task) Todo追加
@@ -78,36 +58,8 @@ $(function () {
             </div>
         `);
 
-        // 削除ボタン 機能の追加
-        $(addedTaskEl).on('click', '.del-btn', (evt) => {
-            let listItem = addedTaskEl;
-            let label = listItem.find('label');
-            
-            $.confirm({
-                text: label.text() + "を削除しますか?",
-                confirmButtonClass: "btn-danger",
-                cancelButtonClass: "btn-secondary",
-                cancelButton: "戻る",
-                confirmButton: "削除",
-                cancel: function () {},
-                confirm: function () {
-                    $(evt.currentTarget).parent().parent().remove();
-                    $.ajax({
-                        url: '/del',
-                        type: 'DELETE',
-                        data: {
-                            taskID: $(evt.currentTarget).parent().parent().data('todo')
-                        },
-                    })
-                    .done((data) => {
-                        console.log(data);
-                    })
-                    .fail(() => {
-                        console.log('err');
-                    });
-                }
-            });
-        });
+        // 削除ボタンの追加
+        delBtn();
 
         // 編集ボタン 機能の追加
         $(addedTaskEl).on('click', '.edit-btn', (evt) => {
@@ -115,8 +67,8 @@ $(function () {
         });
 
 
-         // コンプボタン 機能の追加
-         $(addedTaskEl).on('click', '.comp-btn', (evt) => {
+        // コンプボタン 機能の追加
+        $(addedTaskEl).on('click', '.comp-btn', (evt) => {
             //addedTaskE.find('.comp-btn')打つのめんどいから。
             const changeBtn = addedTaskEl.find('.comp-btn');
 
@@ -165,6 +117,41 @@ $(function () {
         } else {
             todo.append(addedTaskEl);
         }
+
+
+
+        // 削除ボタン 機能の追加
+        function delBtn() {
+            $(addedTaskEl).on('click', '.del-btn', (evt) => {
+                let listItem = addedTaskEl;
+                let label = listItem.find('label');
+
+                $.confirm({
+                    text: label.text() + "を削除しますか?",
+                    confirmButtonClass: "btn-danger",
+                    cancelButtonClass: "btn-secondary",
+                    cancelButton: "戻る",
+                    confirmButton: "削除",
+                    cancel: function () {},
+                    confirm: function () {
+                        $(evt.currentTarget).parent().parent().remove();
+                        $.ajax({
+                                url: '/del',
+                                type: 'DELETE',
+                                data: {
+                                    taskID: $(evt.currentTarget).parent().parent().data('todo')
+                                },
+                            })
+                            .done((data) => {
+                                console.log(data);
+                            })
+                            .fail(() => {
+                                console.log('err');
+                            });
+                    }
+                });
+            });
+        }
     };
 
     // =======================================
@@ -194,7 +181,36 @@ $(function () {
             }
         })
     }
+
+    // =======================================
+    // inputTask() タスクの追加 
+    // =======================================
+    function inputTask() {
+        $('.add-btn').on('click', () => {
+            //入力されたタスクの追加。
+            const addTask = $('.new-task').val();
+
+            if (!addTask) {
+                return;
+            } //↑空白処理 スペースは未対応。
+            const escape = htmlspecialchars(addTask);
+            taskAdd(escape);
+
+            $.ajax({
+                url: '/',
+                type: 'POST',
+                data: {
+                    task: escape,
+                    progress: false,
+                    taskID: indexcounter
+                },
+            })
+            $('.new-task').val('');
+        });
+    }
+
 });
+
 
 function htmlspecialchars(str) {
     return (str + '').replace(/&/g, '&amp;')
