@@ -23,11 +23,17 @@ $(function () {
                         _id: val._id
                     }
                 })
+                .done(() => {
+                    console.log('success')
+                })
+                .fail(() => {
+                    console.log('/firstupdate err')
+                  });
             })
-            .fail(() => {
-                console.log('err');
-            });
         })
+        .fail(() => {
+                console.log('/firstload err');
+        });
 
     // とどを動かす処理
     $('#button-addon').on({
@@ -214,11 +220,12 @@ $(function () {
                     taskID: indexcounter
                 },
             })
+            .fail(() => {
+                console.log('/POST err');
+            });
             $('.new-task').val('');
         })
-        .fail(() => {
-            console.log('/POST err');
-        });
+        
     }
 
 });
